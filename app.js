@@ -10,7 +10,7 @@ require('dotenv').config({
 const connectDB = require('./config/db');
 
 const app = express();
-const clientBuildPath = path.join(__dirname, 'client', 'dist');
+const clientBuildPath = path.join(__dirname, '../nepcha/dist'); // path to frontend dist
 
 // Connect to database
 connectDB();
