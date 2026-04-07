@@ -1,28 +1,34 @@
 // routes/uploadRoutes.js
 const router = require('express').Router();
-const multer = require('multer');
-const path = require('path');
 const { protect } = require('../middleware/authMiddleware');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
+
+// 🔥 configure cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
+});
+
+// 🔥 replace diskStorage with cloudinary storage
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'nepcha-products',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
   },
 });
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const ok = /jpeg|jpg|png|webp/.test(file.mimetype);
-    cb(null, ok);
-  },
-});
+const upload = multer({ storage });
 
 router.post('/', protect, upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  res.json({ url: `/uploads/${req.file.filename}` });
+
+  // 🔥 return cloudinary URL instead of local path
+  res.json({ ImageUrl: req.file.path });
 });
 
 module.exports = router;
